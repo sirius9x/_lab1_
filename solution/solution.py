@@ -10,7 +10,9 @@ Instructions:
 """
 
 import os
+import sys
 import time
+import openai
 from typing import Any, Callable
 
 # ---------------------------------------------------------------------------
@@ -53,13 +55,8 @@ def call_openai(
         client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
     """
     
-    # TODO: import OpenAI, create client, call chat.completions.create,
-    #       measure start/end time, return (response_text, latency)
-    from openai import OpenAI
-    api_key = os.getenv("OPENAI_API_KEY")
-    client = OpenAI(api_key=api_key)
-
-    OPENAI_MODEL = "gpt-4o-mini"
+    # Create the OpenAI client and call the chat completions endpoint.
+    client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
     start_time = time.time()
 
     response = client.chat.completions.create(
@@ -73,11 +70,8 @@ def call_openai(
     )
 
     latency = time.time() - start_time
-
     response_text = response.choices[0].message.content
-    raise NotImplementedError("Implement call_openai")
     return response_text, latency
-    
 
 
 # ---------------------------------------------------------------------------
@@ -105,7 +99,6 @@ def call_openai_mini(
     Hint:
         Reuse call_openai() by passing model=OPENAI_MINI_MODEL.
     """
-    # TODO: call call_openai with model=OPENAI_MINI_MODEL
     return call_openai(
         prompt=prompt,
         model=OPENAI_MINI_MODEL,
@@ -113,7 +106,6 @@ def call_openai_mini(
         top_p=top_p,
         max_tokens=max_tokens,
     )
-    raise NotImplementedError("Implement call_openai_mini")
 
 
 # ---------------------------------------------------------------------------
@@ -139,7 +131,6 @@ def compare_models(prompt: str) -> dict:
         Cost estimate = (len(response.split()) / 0.75) / 1000 * COST_PER_1K_OUTPUT_TOKENS["gpt-4o"]
         (0.75 words ≈ 1 token is a rough approximation)
     """
-    # TODO: call call_openai and call_openai_mini, assemble and return the dict
      # Call GPT-4o
     gpt4o_response, gpt4o_latency = call_openai(prompt)
 
@@ -162,7 +153,6 @@ def compare_models(prompt: str) -> dict:
         "mini_latency": mini_latency,
         "gpt4o_cost_estimate": gpt4o_cost_estimate,
     }
-    raise NotImplementedError("Implement compare_models")
 
 
 # ---------------------------------------------------------------------------
@@ -186,8 +176,8 @@ def streaming_chatbot() -> None:
         - After each turn, append the assistant reply to history.
         - Trim history to the last 3 turns: history = history[-3:]
     """
-    # TODO: enter while-loop, read user input, stream response, maintain history
     history = []
+    client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
     print("Streaming chatbot started.")
     print("Type 'quit' or 'exit' to stop.\n")
@@ -241,7 +231,7 @@ def streaming_chatbot() -> None:
 
         # Keep only last 3 turns
         history = history[-3:]
-    raise NotImplementedError("Implement streaming_chatbot")
+
 
 
 # ---------------------------------------------------------------------------
@@ -267,7 +257,6 @@ def retry_with_backoff(
     Raises:
         The last exception raised by fn() after all retries are exhausted.
     """
-    # TODO: implement retry loop with exponential backoff
     last_exception = None
 
     for attempt in range(max_retries + 1):
@@ -292,7 +281,6 @@ def retry_with_backoff(
             )
 
             time.sleep(delay)
-    raise NotImplementedError("Implement retry_with_backoff")
 
 
 # ---------------------------------------------------------------------------
@@ -309,7 +297,6 @@ def batch_compare(prompts: list[str]) -> list[dict]:
         List of dicts, each being the compare_models result with an extra
         key "prompt" containing the original prompt string.
     """
-    # TODO: iterate over prompts, call compare_models, add "prompt" key
     results = []
 
     for prompt in prompts:
@@ -324,7 +311,6 @@ def batch_compare(prompts: list[str]) -> list[dict]:
         results.append(comparison)
 
     return results
-    raise NotImplementedError("Implement batch_compare")
 
 
 # ---------------------------------------------------------------------------
@@ -344,7 +330,6 @@ def format_comparison_table(results: list[dict]) -> str:
     Hint:
         Truncate long text to 40 characters for readability.
     """
-    # TODO: build and return a formatted table string
     def truncate(text: str, max_length: int = 40) -> str:
         if len(text) <= max_length:
             return text
@@ -377,7 +362,20 @@ def format_comparison_table(results: list[dict]) -> str:
         rows.append(row)
 
     return "\n".join(rows)
-    raise NotImplementedError("Implement format_comparison_table")
+
+
+# Make the module available under a valid import path for the test harness.
+sys.modules["solution"] = sys.modules[__name__]
+for fn in [
+    call_openai,
+    call_openai_mini,
+    compare_models,
+    streaming_chatbot,
+    retry_with_backoff,
+    batch_compare,
+    format_comparison_table,
+]:
+    fn.__module__ = "solution"
 
 
 # ---------------------------------------------------------------------------
